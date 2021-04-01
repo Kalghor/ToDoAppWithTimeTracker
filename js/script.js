@@ -52,3 +52,21 @@ function renderTask() {
             })
         })
 }
+
+function listOperationsForTask(taskId){
+    return fetch(apihost + "/api/tasks/" + taskId + "zadania>/operations")
+        .then(res => {
+            if(res.ok){
+                return res.json();
+            } else {
+                alert("Error in method listOperationsForTask!!!")
+            }
+        })
+}
+
+function renderOperationsForTask(taskId){
+    listOperationsForTask(taskId)
+        .then(res => {
+
+        })
+}
