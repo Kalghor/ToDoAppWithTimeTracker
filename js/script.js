@@ -22,7 +22,6 @@ function apiListTasks() {
 function renderTask() {
     apiListTasks()
         .then(res => {
-            console.log(res);
             res.data.forEach(el => {
                 const place = document.querySelector(".placeJS");
                 const section = document.createElement("section");
@@ -76,7 +75,6 @@ function listOperationsForTask(taskId) {
 }
 
 function renderOperationsForTask(taskId) {
-    console.log("taskId: " + taskId);
     listOperationsForTask(taskId)
         .then(res => {
             const ul = document.createElement("ul");
@@ -86,10 +84,14 @@ function renderOperationsForTask(taskId) {
                 res.data.forEach(operation => {
                     if (operation.task.id === section.dataset.id) {
                         const descriptionDiv = document.createElement("div");
+                        const span = document.createElement("span");
+                        span.className = "badge badge-success badge-pill ml-2";
+                        span.innerText = convertTimeMinutesToHours(operation.timeSpent);
                         const li = document.createElement("li");
                         li.className = "list-group-item d-flex justify-content-between align-items-center";
                         li.appendChild(descriptionDiv);
                         descriptionDiv.innerText = operation.description;
+                        descriptionDiv.appendChild(span);
                         ul.appendChild(li);
                         if (section.dataset.status === "open") {
                             const buttonsDiv = document.createElement("div");
@@ -113,3 +115,16 @@ function renderOperationsForTask(taskId) {
             })
         })
 }
+
+function convertTimeMinutesToHours(timeInMinutes) {
+    let result = "";
+    if (timeInMinutes.length > 3) {
+        let h = (parseInt(timeInMinutes) / 60).toPrecision(1);
+        let m = ((parseFloat(timeInMinutes) / 60) - h) * 100;
+        result = h + "h" + " " + m + "m";
+    } else {
+        result = timeInMinutes + "m";
+    }
+    return result;
+}
+
