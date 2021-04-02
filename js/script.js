@@ -1,11 +1,12 @@
 const apikey = '7aeef90b-2b1f-4415-b5f0-ad7c1bc0c5c5';
 const apihost = 'https://todo-api.coderslab.pl';
-
+let singleTaskToDisplay;
 document.addEventListener('DOMContentLoaded', function () {
     renderTask();
 });
 
-function apiListTasks() {
+function apiListTasks(singleTaskToDisplay) {
+    if (singleTaskToDisplay === undefined) {
     return fetch(apihost + "/api/tasks", {
         headers: {
             Authorization: apikey
@@ -17,10 +18,23 @@ function apiListTasks() {
             alert("Error in method apiListTasks!!!");
         }
     });
+    } else {
+        return fetch(apihost + "/api/tasks/", {
+            headers: {
+                Authorization: apikey
+            }
+        }).then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                alert("Error in method apiListTasks!!!");
+            }
+        });
+    }
 }
 
-function renderTask() {
-    apiListTasks()
+function renderTask(singleTaskToDisplay) {
+    apiListTasks(singleTaskToDisplay)
         .then(res => {
             res.data.forEach(el => {
                 const place = document.querySelector(".placeJS");
@@ -128,3 +142,41 @@ function convertTimeMinutesToHours(timeInMinutes) {
     return result;
 }
 
+function createTask(title, description) {
+    return fetch(apihost + "/api/tasks",
+        {
+            headers: {Authorization: apikey, 'Content-Type': 'application/json'},
+            body: JSON.stringify({title: title, description: description, status: 'open'}),
+            method: 'POST'
+
+
+        }
+    ).then(res => {
+        if (res.ok) {
+            return res.json();
+        } else {
+            alert("Error in method createTask!!!");
+        }
+    })
+}
+
+const addingForm = document.querySelector(".js-task-adding-form");
+const inputTitle = addingForm.querySelector("input[name='title']");
+const inputDescription = addingForm.querySelector("input[name='description']");
+const addingBtn = addingForm.querySelector(".btn");
+
+addingForm.addEventListener("submit", ev => {
+    ev.preventDefault();
+    createTask(inputTitle.value, inputDescription.value)
+        .then(res => {
+            renderTask(res);
+        })
+})
+
+const deleteBtn = document.querySelectorAll(".btn-outline-danger");
+
+deleteBtn.forEach(el => {
+    el.addEventListener("click", ev => {
+
+    })
+})
