@@ -1,20 +1,6 @@
 const apikey = '7aeef90b-2b1f-4415-b5f0-ad7c1bc0c5c5';
 const apihost = 'https://todo-api.coderslab.pl';
-let singleTaskToDisplay = false;
-document.addEventListener('DOMContentLoaded', function () {
-    renderTask();
 
-    addingForm.addEventListener("submit", ev => {
-        ev.preventDefault();
-        createTask(inputTitle.value, inputDescription.value)
-            .then(res => {
-                singleTaskToDisplay = true;
-                console.log(res);
-                renderTask(res);
-                singleTaskToDisplay = false;
-            })
-    })
-});
 
 function apiListTasks() {
     return fetch(apihost + "/api/tasks", {
@@ -28,56 +14,6 @@ function apiListTasks() {
             alert("Error in method apiListTasks!!!");
         }
     });
-}
-
-function renderTask() {
-    apiListTasks()
-        .then(res => {
-            res.data.forEach(el => {
-                const form = document.querySelector(".js-task-adding-form");
-
-                const section = document.createElement("section");
-                section.className = "card mt-5 shadow-sm";
-                section.dataset.id = el.id;
-                section.dataset.status = el.status;
-
-                const headerDiv = document.createElement("div");
-                headerDiv.className = "card-header d-flex justify-content-between align-items-center";
-
-                const divWithoutClassys = document.createElement("div");
-
-                const h6 = document.createElement("h6");
-                h6.className = "card-subtitle text-muted";
-                h6.innerText = el.description;
-
-                const h5 = document.createElement("h5");
-                h5.innerText = el.title;
-
-                section.append(headerDiv);
-                headerDiv.append(divWithoutClassys);
-                divWithoutClassys.append(h5);
-
-                divWithoutClassys.append(h6);
-
-                form.parentElement.parentElement.parentElement.appendChild(section);
-
-                const divWithButtons = document.createElement("div");
-                headerDiv.appendChild(divWithButtons);
-
-                const btnDelete = document.createElement("button");
-                btnDelete.className = "btn btn-outline-danger btn-sm ml-2";
-                btnDelete.innerText = "Delete";
-                divWithButtons.appendChild(btnDelete);
-
-                if (section.dataset.status === "open") {
-                    const btnFinish = document.createElement("button");
-                    btnFinish.className = "btn btn-dark btn-sm";
-                    btnFinish.innerText = "Finish";
-                    divWithButtons.appendChild(btnFinish);
-                }
-                renderOperationsForTask(el.id);
-            })
-        })
 }
 
 
@@ -97,62 +33,10 @@ function listOperationsForTask(taskId) {
         })
 }
 
-function renderOperationsForTask(taskId) {
-    listOperationsForTask(taskId)
-        .then(res => {
-
-            const ul = document.createElement("ul");
-            ul.className = "list-group list-group-flush";
-
-            const sections = document.querySelectorAll("section");
-            sections.forEach(section => {
-                res.data.forEach(operation => {
-                    if (operation.task.id === section.dataset.id) {
-
-                        const descriptionDiv = document.createElement("div");
-
-                        const span = document.createElement("span");
-                        span.className = "badge badge-success badge-pill ml-2";
-                        span.innerText = convertTimeMinutesToHours(operation.timeSpent);
-
-                        const li = document.createElement("li");
-                        li.className = "list-group-item d-flex justify-content-between align-items-center";
-                        li.appendChild(descriptionDiv);
-                        ul.appendChild(li);
-
-                        descriptionDiv.innerText = operation.description;
-                        descriptionDiv.appendChild(span);
-
-                        if (section.dataset.status === "open") {
-                            const buttonsDiv = document.createElement("div");
-
-                            const button15min = document.createElement("button");
-                            button15min.className = "btn btn-outline-success btn-sm mr-2";
-                            button15min.innerText = "+15m";
-
-                            const button1h = document.createElement("button");
-                            button1h.className = "btn btn-outline-success btn-sm mr-2";
-                            button1h.innerText = "+1h";
-
-                            const buttonDelete = document.createElement("button");
-                            buttonDelete.className = "btn btn-outline-danger btn-sm";
-                            buttonDelete.innerText = "Delete";
-
-                            li.appendChild(buttonsDiv);
-                            buttonsDiv.appendChild(button15min);
-                            buttonsDiv.appendChild(button1h);
-                            buttonsDiv.appendChild(buttonDelete);
-                        }
-                        section.appendChild(ul);
-                    }
-                })
-            })
-        })
-}
 
 function convertTimeMinutesToHours(timeInMinutes) {
     let result = "";
-    if (timeInMinutes.length > 3) {
+    if (timeInMinutes.length > 2 || timeInMinutes === "60") {
         let h = (parseInt(timeInMinutes) / 60).toPrecision(1);
         let m = ((parseFloat(timeInMinutes) / 60) - h) * 100;
         result = h + "h" + " " + m + "m";
@@ -178,7 +62,180 @@ function createTask(title, description) {
     })
 }
 
-const addingForm = document.querySelector(".js-task-adding-form");
-const inputTitle = addingForm.querySelector("input[name='title']");
-const inputDescription = addingForm.querySelector("input[name='description']");
-const addingBtn = addingForm.querySelector(".btn");
+function renderTasks() {
+    apiListTasks()
+        .then(res => {
+            res.data.forEach(el => {
+                const firstDiv = document.querySelector("div");
+
+                const section = document.createElement("section");
+                section.className = "card mt-5 shadow-sm";
+                section.dataset.task_id = el.id;
+
+                const headerDiv = document.createElement("div");
+                headerDiv.className = "card-header d-flex justify-content-between align-items-center";
+
+                const emptyDiv = document.createElement("div");
+                const h5 = document.createElement("h5");
+                h5.innerText = el.title;
+
+                const h6 = document.createElement("h6");
+                h6.className = "card-subtitle text-muted";
+                h6.innerText = el.description;
+
+                const buttonsDiv = document.createElement("div");
+                const buttonFinish = document.createElement("button");
+                buttonFinish.className = "btn btn-dark btn-sm";
+                buttonFinish.innerText = "Finish";
+
+                const buttonDelete = document.createElement("button");
+                buttonDelete.className = "btn btn-outline-danger btn-sm ml-2";
+                buttonDelete.innerText = "Delete";
+                buttonDelete.addEventListener("click", ev => {
+                    ev.preventDefault();
+                    deleteTask(el.id);
+                    buttonDelete.parentElement.parentElement.parentElement.remove();
+                })
+
+                const ul = document.createElement("ul");
+                ul.className = "list-group list-group-flush";
+
+                firstDiv.after(section);
+                section.appendChild(headerDiv);
+                headerDiv.appendChild(emptyDiv);
+                emptyDiv.appendChild(h5);
+                emptyDiv.appendChild(h6);
+                headerDiv.append(buttonsDiv);
+                if(el.status === "open") {
+                    buttonsDiv.appendChild(buttonFinish);
+                }
+                buttonsDiv.appendChild(buttonDelete);
+                section.append(ul);
+
+                const addOperationDiv = document.createElement("div");
+                addOperationDiv.className = "card-body";
+
+                const addOperationForm = document.createElement("form");
+
+                const inputGroupDiv = document.createElement("div");
+                inputGroupDiv.className = "input-group";
+
+                const input = document.createElement("input");
+                input.className = "form-control";
+                input.type = "text";
+                input.placeholder = "Operation description";
+                input.minlength = "5";
+
+                const buttonDiv = document.createElement("div");
+                buttonDiv.className = "input-group-append";
+
+                const addButton = document.createElement("button");
+                addButton.className = "btn btn-info";
+                addButton.innerText = "Add";
+
+                addOperationForm.addEventListener("submit", ev => {
+                    ev.preventDefault();
+                    createOperationForTask(el.id, input.value)
+                        .then(res => {
+                            renderOperations(ul, res.id, res.status, res.description, res.timeSpent);
+                        })
+                })
+
+
+                section.append(addOperationDiv);
+                addOperationDiv.appendChild(addOperationForm);
+                addOperationForm.appendChild(inputGroupDiv);
+                inputGroupDiv.appendChild(input);
+                inputGroupDiv.appendChild(buttonDiv);
+                buttonDiv.appendChild(addButton);
+
+                listOperationsForTask(el.id)
+                    .then(res => {
+                        res.data.forEach(res => {
+                            renderOperations(ul, res.id, res.status, res.description, res.timeSpent)
+                        })
+                    })
+            })
+        })
+}
+
+function renderOperations(ul, operationId, status, operationDescription, timeSpent) {
+    const li = document.createElement("li");
+    li.className = "list-group-item d-flex justify-content-between align-items-center";
+    const descriptionDiv = document.createElement("div");
+    descriptionDiv.innerText = operationDescription;
+
+    const span = document.createElement("span");
+    span.className = "badge badge-success badge-pill ml-2";
+    // span.innerText = "Sztywniutko";
+    span.innerText = convertTimeMinutesToHours(timeSpent.toString());
+
+    const buttonsDiv = document.createElement("div");
+
+    const button15m = document.createElement("button");
+    button15m.className = "btn btn-outline-success btn-sm mr-2";
+    button15m.innerText = "15m";
+
+    const button1h = document.createElement("button");
+    button1h.className = "btn btn-outline-success btn-sm mr-2";
+    button1h.innerText = "1h";
+
+
+    const buttonDelete = document.createElement("button");
+    buttonDelete.className = "btn btn-outline-danger btn-sm";
+    buttonDelete.innerText = "Delete";
+
+    ul.appendChild(li);
+    li.appendChild(descriptionDiv);
+    descriptionDiv.appendChild(span);
+    li.appendChild(buttonsDiv);
+    buttonsDiv.appendChild(button15m);
+    buttonsDiv.appendChild(button1h);
+    buttonsDiv.appendChild(buttonDelete);
+
+}
+
+function deleteTask(taskId){
+    fetch("https://todo-api.coderslab.pl/api/tasks/" + taskId, {
+        headers: {Authorization: apikey},
+        method: 'DELETE'
+    }).then(res => {
+        if(res.ok){
+            return res.json();
+        } else {
+            alert("Error in method deleteTask!!!")
+        }
+    })
+}
+
+function createOperationForTask(taskId, description, currentTimeSpent){
+    return fetch(apihost + "/api/tasks/" + taskId + "/operations",
+        {
+            headers: {Authorization: apikey, 'Content-Type': 'application/json'},
+            body: JSON.stringify({description: description, timeSpent: currentTimeSpent}),
+            method: 'POST'
+        })
+        .then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                alert("Error in method createOperationForTask!!!")
+            }
+        })}
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    renderTasks();
+
+    const addingForm = document.querySelector(".js-task-adding-form");
+    addingForm.addEventListener("submit", ev => {
+        ev.preventDefault();
+        const title = document.querySelector("input[name='title']");
+        const description = document.querySelector("input[name='description']");
+        createTask(title.value,description.value)
+            .then(res => {
+                renderTasks();
+            })
+    })
+});
+
