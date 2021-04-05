@@ -33,24 +33,11 @@ function listOperationsForTask(taskId) {
         })
 }
 
-
 function convertTimeMinutesToHours(timeInMinutes) {
-    let result = "";
+    let result = 0;
     if (timeInMinutes > 59) {
-        let h = (parseInt(timeInMinutes) / 60).toPrecision(1);
-        let m = ((parseFloat(timeInMinutes) / 60) - h) * 100;
-        result = h + "h" + " " + m + "m";
-    } else {
-        result = timeInMinutes + "m";
-    }
-    return result;
-}
-
-function convertTimeMinutesToHours(timeInMinutes) {
-    let result = "";
-    if (timeInMinutes > 59) {
-        let h = (parseInt(timeInMinutes) / 60).toPrecision(1);
-        let m = ((parseFloat(timeInMinutes) / 60) - h) * 100;
+        let h = Math.floor(parseInt(timeInMinutes) / 60);
+        let m = (parseFloat(timeInMinutes) - (h * 60));
         result = h + "h" + " " + m + "m";
     } else {
         result = timeInMinutes + "m";
@@ -193,16 +180,23 @@ function renderOperations(ul, operationId, status, operationDescription, timeSpe
         const timeSpentTmp = timeSpent + 15;
         updateOperation(operationId, operationDescription, timeSpentTmp)
             .then(res => {
-                console.log(res.data.timeSpent);
                 li.remove();
-                setTimeout(renderOperations(ul, res.data.id, res.data.status, res.data.description, res.data.timeSpent),300);
+                renderOperations(ul, res.data.id, res.data.status, res.data.description, res.data.timeSpent);
             })
-
     })
 
     const button1h = document.createElement("button");
     button1h.className = "btn btn-outline-success btn-sm mr-2";
     button1h.innerText = "+1h";
+    button1h.addEventListener("click", ev => {
+        ev.preventDefault();
+        const timeSpentTmp = timeSpent + 60;
+        updateOperation(operationId, operationDescription, timeSpentTmp)
+            .then(res => {
+                li.remove();
+                renderOperations(ul, res.data.id, res.data.status, res.data.description, res.data.timeSpent);
+            })
+    })
 
 
     const buttonDelete = document.createElement("button");
