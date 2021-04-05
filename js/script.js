@@ -132,12 +132,13 @@ function renderTasks() {
                 const addButton = document.createElement("button");
                 addButton.className = "btn btn-info";
                 addButton.innerText = "Add";
-
                 addOperationForm.addEventListener("submit", ev => {
                     ev.preventDefault();
+
                     createOperationForTask(el.id, input.value)
                         .then(res => {
-                            renderOperations(ul, res.id, res.status, res.description, res.timeSpent);
+                            console.log(res.data.timeSpent);
+                            renderOperations(ul, res.data.id, el.status, res.data.description, res.data.timeSpent);
                         })
                 })
 
@@ -174,11 +175,11 @@ function renderOperations(ul, operationId, status, operationDescription, timeSpe
 
     const button15m = document.createElement("button");
     button15m.className = "btn btn-outline-success btn-sm mr-2";
-    button15m.innerText = "15m";
+    button15m.innerText = "+15m";
 
     const button1h = document.createElement("button");
     button1h.className = "btn btn-outline-success btn-sm mr-2";
-    button1h.innerText = "1h";
+    button1h.innerText = "+1h";
 
 
     const buttonDelete = document.createElement("button");
@@ -208,21 +209,27 @@ function deleteTask(taskId){
     })
 }
 
-function createOperationForTask(taskId, description, currentTimeSpent){
-    return fetch(apihost + "/api/tasks/" + taskId + "/operations",
-        {
-            headers: {Authorization: apikey, 'Content-Type': 'application/json'},
-            body: JSON.stringify({description: description, timeSpent: currentTimeSpent}),
-            method: 'POST'
-        })
-        .then(res => {
-            if (res.ok) {
-                return res.json();
-            } else {
-                alert("Error in method createOperationForTask!!!")
-            }
-        })}
 
+function createOperationForTask(taskId, description1) {
+    return fetch(
+        apihost + '/api/tasks/' + taskId + "/operations",
+        {
+            headers: {
+                'Authorization': apikey,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ description: description1, timeSpent: 0 }),
+            method: 'POST'
+        }
+    ).then(
+        function(resp) {
+            if(!resp.ok) {
+                alert('Wystąpił błąd! Otwórz devtools i zakładkę Sieć/Network, i poszukaj przyczyny');
+            }
+            return resp.json();
+        }
+    )
+}
 
 document.addEventListener('DOMContentLoaded', function () {
     renderTasks();
