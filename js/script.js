@@ -36,7 +36,19 @@ function listOperationsForTask(taskId) {
 
 function convertTimeMinutesToHours(timeInMinutes) {
     let result = "";
-    if (timeInMinutes.length > 2 || timeInMinutes === "60") {
+    if (timeInMinutes > 59) {
+        let h = (parseInt(timeInMinutes) / 60).toPrecision(1);
+        let m = ((parseFloat(timeInMinutes) / 60) - h) * 100;
+        result = h + "h" + " " + m + "m";
+    } else {
+        result = timeInMinutes + "m";
+    }
+    return result;
+}
+
+function convertTimeMinutesToHours(timeInMinutes) {
+    let result = "";
+    if (timeInMinutes > 59) {
         let h = (parseInt(timeInMinutes) / 60).toPrecision(1);
         let m = ((parseFloat(timeInMinutes) / 60) - h) * 100;
         result = h + "h" + " " + m + "m";
@@ -106,7 +118,7 @@ function renderTasks() {
                 emptyDiv.appendChild(h5);
                 emptyDiv.appendChild(h6);
                 headerDiv.append(buttonsDiv);
-                if(el.status === "open") {
+                if (el.status === "open") {
                     buttonsDiv.appendChild(buttonFinish);
                 }
                 buttonsDiv.appendChild(buttonDelete);
@@ -137,7 +149,6 @@ function renderTasks() {
 
                     createOperationForTask(el.id, input.value)
                         .then(res => {
-                            console.log(res.data.timeSpent);
                             renderOperations(ul, res.data.id, el.status, res.data.description, res.data.timeSpent);
                         })
                 })
@@ -153,7 +164,7 @@ function renderTasks() {
                 listOperationsForTask(el.id)
                     .then(res => {
                         res.data.forEach(res => {
-                            renderOperations(ul, res.id, res.status, res.description, res.timeSpent)
+                            renderOperations(ul, res.id, res.status, res.description, res.timeSpent);
                         })
                     })
             })
@@ -163,6 +174,7 @@ function renderTasks() {
 function renderOperations(ul, operationId, status, operationDescription, timeSpent) {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex justify-content-between align-items-center";
+
     const descriptionDiv = document.createElement("div");
     descriptionDiv.innerText = operationDescription;
 
@@ -176,6 +188,17 @@ function renderOperations(ul, operationId, status, operationDescription, timeSpe
     const button15m = document.createElement("button");
     button15m.className = "btn btn-outline-success btn-sm mr-2";
     button15m.innerText = "+15m";
+    button15m.addEventListener("click", ev => {
+        ev.preventDefault();
+        const timeSpentTmp = timeSpent + 15;
+        updateOperation(operationId, operationDescription, timeSpentTmp)
+            .then(res => {
+                console.log(res.data.timeSpent);
+                li.remove();
+                setTimeout(renderOperations(ul, res.data.id, res.data.status, res.data.description, res.data.timeSpent),300);
+            })
+
+    })
 
     const button1h = document.createElement("button");
     button1h.className = "btn btn-outline-success btn-sm mr-2";
@@ -185,6 +208,14 @@ function renderOperations(ul, operationId, status, operationDescription, timeSpe
     const buttonDelete = document.createElement("button");
     buttonDelete.className = "btn btn-outline-danger btn-sm";
     buttonDelete.innerText = "Delete";
+
+    buttonDelete.addEventListener("click", ev => {
+        ev.preventDefault();
+        deleteOperation(operationId)
+            .then(res => {
+                li.remove();
+            })
+    })
 
     ul.appendChild(li);
     li.appendChild(descriptionDiv);
@@ -196,12 +227,26 @@ function renderOperations(ul, operationId, status, operationDescription, timeSpe
 
 }
 
-function deleteTask(taskId){
+function deleteTask(taskId) {
     fetch("https://todo-api.coderslab.pl/api/tasks/" + taskId, {
         headers: {Authorization: apikey},
         method: 'DELETE'
     }).then(res => {
-        if(res.ok){
+        if (res.ok) {
+            return res.json();
+        } else {
+            alert("Error in method deleteTask!!!")
+        }
+    })
+}
+
+
+function deleteOperation(operationId) {
+    return fetch(apihost + "/api/operations/" + operationId, {
+        headers: {Authorization: apikey},
+        method: 'DELETE'
+    }).then(res => {
+        if (res.ok) {
             return res.json();
         } else {
             alert("Error in method deleteTask!!!")
@@ -218,18 +263,39 @@ function createOperationForTask(taskId, description1) {
                 'Authorization': apikey,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ description: description1, timeSpent: 0 }),
+            body: JSON.stringify({description: description1, timeSpent: 0}),
             method: 'POST'
         }
     ).then(
-        function(resp) {
-            if(!resp.ok) {
-                alert('Wystąpił błąd! Otwórz devtools i zakładkę Sieć/Network, i poszukaj przyczyny');
+        function (resp) {
+            if (!resp.ok) {
+                alert('Error in method createOperationForTask!!!');
             }
             return resp.json();
         }
     )
 }
+
+function updateOperation(operationId, description2, timeSpent2) {
+    return fetch(
+        apihost + '/api/operations/' + operationId,
+        {
+            headers: {
+                'Authorization': apikey,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({description: description2, timeSpent: timeSpent2}),
+            method: 'PUT'
+        }).then(
+        function (resp) {
+            if (!resp.ok) {
+                alert('Error in method updateOperation!!!');
+            }
+            return resp.json();
+        }
+    )
+}
+
 
 document.addEventListener('DOMContentLoaded', function () {
     renderTasks();
@@ -239,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ev.preventDefault();
         const title = document.querySelector("input[name='title']");
         const description = document.querySelector("input[name='description']");
-        createTask(title.value,description.value)
+        createTask(title.value, description.value)
             .then(res => {
                 renderTasks();
             })
