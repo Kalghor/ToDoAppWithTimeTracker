@@ -61,9 +61,27 @@ function createTask(title, description) {
     })
 }
 
+function updateTask(taskId, title, description, status) {
+    return fetch(apihost + "/api/tasks/" + taskId,
+        {
+            headers: {Authorization: apikey, 'Content-Type': 'application/json'},
+            body: JSON.stringify({title: title, description: description, status: status}),
+            method: 'PUT'
+        }
+    ).then(res => {
+        if (res.ok) {
+            return res.json();
+        } else {
+            alert("Error in method createTask!!!");
+        }
+    })
+}
+
+
 function renderTasks() {
     apiListTasks()
         .then(res => {
+            const main = document.querySelector("main");
             res.data.forEach(el => {
                 const firstDiv = document.querySelector("div");
 
@@ -86,6 +104,19 @@ function renderTasks() {
                 const buttonFinish = document.createElement("button");
                 buttonFinish.className = "btn btn-dark btn-sm";
                 buttonFinish.innerText = "Finish";
+                buttonFinish.addEventListener("click", ev => {
+                    ev.preventDefault();
+                    updateTask(el.id, el.title, el.description, "close")
+                        .then(res => {
+                            const sections = document.querySelectorAll("section");
+                            sections.forEach(el => {
+                                el.remove();
+                            })
+                            renderTasks();
+                            // renderOperations(ul,res.data.id,res.data.status,res.data.description, "120");
+                            console.log(res);
+                        })
+                })
 
                 const buttonDelete = document.createElement("button");
                 buttonDelete.className = "btn btn-outline-danger btn-sm ml-2";
@@ -140,18 +171,18 @@ function renderTasks() {
                         })
                 })
 
-
-                section.append(addOperationDiv);
-                addOperationDiv.appendChild(addOperationForm);
-                addOperationForm.appendChild(inputGroupDiv);
-                inputGroupDiv.appendChild(input);
-                inputGroupDiv.appendChild(buttonDiv);
-                buttonDiv.appendChild(addButton);
-
+                if (el.status === "open") {
+                    section.append(addOperationDiv);
+                    addOperationDiv.appendChild(addOperationForm);
+                    addOperationForm.appendChild(inputGroupDiv);
+                    inputGroupDiv.appendChild(input);
+                    inputGroupDiv.appendChild(buttonDiv);
+                    buttonDiv.appendChild(addButton);
+                }
                 listOperationsForTask(el.id)
                     .then(res => {
                         res.data.forEach(res => {
-                            renderOperations(ul, res.id, res.status, res.description, res.timeSpent);
+                            renderOperations(ul, res.id, el.status, res.description, res.timeSpent);
                         })
                     })
             })
@@ -167,7 +198,6 @@ function renderOperations(ul, operationId, status, operationDescription, timeSpe
 
     const span = document.createElement("span");
     span.className = "badge badge-success badge-pill ml-2";
-    // span.innerText = "Sztywniutko";
     span.innerText = convertTimeMinutesToHours(timeSpent.toString());
 
     const buttonsDiv = document.createElement("div");
@@ -194,6 +224,7 @@ function renderOperations(ul, operationId, status, operationDescription, timeSpe
         updateOperation(operationId, operationDescription, timeSpentTmp)
             .then(res => {
                 li.remove();
+                console.log(res);
                 renderOperations(ul, res.data.id, res.data.status, res.data.description, res.data.timeSpent);
             })
     })
@@ -214,11 +245,12 @@ function renderOperations(ul, operationId, status, operationDescription, timeSpe
     ul.appendChild(li);
     li.appendChild(descriptionDiv);
     descriptionDiv.appendChild(span);
-    li.appendChild(buttonsDiv);
-    buttonsDiv.appendChild(button15m);
-    buttonsDiv.appendChild(button1h);
-    buttonsDiv.appendChild(buttonDelete);
-
+    if (status !== "close") {
+        li.appendChild(buttonsDiv);
+        buttonsDiv.appendChild(button15m);
+        buttonsDiv.appendChild(button1h);
+        buttonsDiv.appendChild(buttonDelete);
+    }
 }
 
 function deleteTask(taskId) {
@@ -293,7 +325,6 @@ function updateOperation(operationId, description2, timeSpent2) {
 
 document.addEventListener('DOMContentLoaded', function () {
     renderTasks();
-
     const addingForm = document.querySelector(".js-task-adding-form");
     addingForm.addEventListener("submit", ev => {
         ev.preventDefault();
@@ -301,6 +332,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const description = document.querySelector("input[name='description']");
         createTask(title.value, description.value)
             .then(res => {
+                const sections = document.querySelectorAll("section");
+                sections.forEach(el => {
+                    el.remove();
+                })
                 renderTasks();
             })
     })
